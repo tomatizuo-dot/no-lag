@@ -115,17 +115,42 @@ local function clear(v)
 end
 
 local function Ultra()
+
 	Lighting.GlobalShadows = false
 	Lighting.FogEnd = 1e9
-	if camera then camera.FieldOfView = 50 end
+	Lighting.Brightness = 1
+	Lighting.EnvironmentDiffuseScale = 0
+	Lighting.EnvironmentSpecularScale = 0
 
+	if camera then
+		camera.FieldOfView = 60
+	end
+
+	-- 1回だけ処理
 	for _,v in ipairs(workspace:GetDescendants()) do
+
+		-- エフェクト停止
+		if v:IsA("ParticleEmitter")
+		or v:IsA("Trail")
+		or v:IsA("Beam")
+		or v:IsA("Smoke")
+		or v:IsA("Fire")
+		or v:IsA("Sparkles") then
+
+			v.Enabled = false
+		end
+
+		-- パーツ軽量化
 		if v:IsA("BasePart") then
-			v.Transparency = 1
 			v.CastShadow = false
 			v.Material = Enum.Material.Plastic
 		end
-		clear(v)
+
+		-- テクスチャ削除
+		if v:IsA("Texture")
+		or v:IsA("Decal") then
+			v:Destroy()
+		end
 	end
 end
 
