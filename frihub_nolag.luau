@@ -9,9 +9,9 @@ pcall(function()
 	guiParent:FindFirstChild("FriHubNoLag"):Destroy()
 end)
 
---=========================
+--========================
 -- GUI
---=========================
+--========================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "FriHubNoLag"
 ScreenGui.ResetOnSpawn = false
@@ -25,9 +25,9 @@ Main.BackgroundColor3 = Color3.fromRGB(25,25,25)
 Main.BorderSizePixel = 0
 Main.Parent = ScreenGui
 
---=========================
+--========================
 -- TOP
---=========================
+--========================
 local Top = Instance.new("Frame")
 Top.Size = UDim2.new(1,0,0,36)
 Top.BackgroundColor3 = Color3.fromRGB(35,35,35)
@@ -70,9 +70,9 @@ CloseBtn.TextSize = 18
 CloseBtn.BorderSizePixel = 0
 CloseBtn.Parent = Top
 
---=========================
+--========================
 -- CONTAINER
---=========================
+--========================
 local Container = Instance.new("ScrollingFrame")
 Container.Size = UDim2.new(1,0,1,-36)
 Container.Position = UDim2.new(0,0,0,36)
@@ -90,9 +90,9 @@ Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 	Container.CanvasSize = UDim2.new(0,0,0,Layout.AbsoluteContentSize.Y + 10)
 end)
 
---=========================
+--========================
 -- BUTTON
---=========================
+--========================
 local function Button(text, callback)
 
 	local b = Instance.new("TextButton")
@@ -109,9 +109,9 @@ local function Button(text, callback)
 	b.MouseButton1Click:Connect(callback)
 end
 
---=========================
--- OPTIMIZER
---=========================
+--========================
+-- ULTRA
+--========================
 local optimized = false
 
 local function UltraOptimize()
@@ -122,98 +122,141 @@ local function UltraOptimize()
 
 	optimized = true
 
-	-- Lighting
+	-- LIGHTING
 	Lighting.GlobalShadows = false
 	Lighting.FogEnd = 1e9
-	Lighting.Brightness = 1
+	Lighting.Brightness = 0
 	Lighting.EnvironmentDiffuseScale = 0
 	Lighting.EnvironmentSpecularScale = 0
-	Lighting.Technology = Enum.Technology.Compatibility
 
-	-- Camera
+	pcall(function()
+		Lighting.Technology = Enum.Technology.Compatibility
+	end)
+
+	-- CAMERA
 	if camera then
 		camera.FieldOfView = 50
 	end
 
-	-- Water
+	-- TERRAIN
 	if Terrain then
 		Terrain.WaterWaveSize = 0
 		Terrain.WaterWaveSpeed = 0
 		Terrain.WaterReflectance = 0
 		Terrain.WaterTransparency = 1
+
+		pcall(function()
+			Terrain.Decoration = false
+		end)
 	end
 
-	-- Effects
+	-- LIGHTING EFFECTS
 	for _,v in ipairs(Lighting:GetChildren()) do
 
-		if v:IsA("BlurEffect")
-		or v:IsA("BloomEffect")
-		or v:IsA("SunRaysEffect")
-		or v:IsA("ColorCorrectionEffect")
-		or v:IsA("DepthOfFieldEffect") then
+		if v:IsA("PostEffect")
+		or v:IsA("Atmosphere")
+		or v:IsA("Sky") then
 
-			v.Enabled = false
+			v:Destroy()
 		end
 	end
 
-	-- Workspace optimize
+	-- WORKSPACE
 	for _,v in ipairs(workspace:GetDescendants()) do
 
+		-- PARTS
 		if v:IsA("BasePart") then
 
-			v.CastShadow = false
 			v.Material = Enum.Material.Plastic
+			v.CastShadow = false
 			v.Reflectance = 0
 
-			if v.Material == Enum.Material.Neon then
-				v.Material = Enum.Material.Plastic
+			local n = string.lower(v.Name)
+
+			local keep =
+				n:find("base")
+				or n:find("floor")
+				or n:find("ground")
+				or v.Position.Y < 3
+
+			if not keep then
+				v.LocalTransparencyModifier = 1
 			end
 		end
 
+		-- MESH
 		if v:IsA("MeshPart") then
 			v.RenderFidelity = Enum.RenderFidelity.Performance
 		end
 
+		-- EFFECTS
 		if v:IsA("ParticleEmitter")
 		or v:IsA("Trail")
 		or v:IsA("Beam")
 		or v:IsA("Smoke")
 		or v:IsA("Fire")
 		or v:IsA("Sparkles")
+		or v:IsA("Explosion")
 		or v:IsA("Highlight") then
 
 			v.Enabled = false
 		end
 
+		-- TEXTURES
 		if v:IsA("Texture")
 		or v:IsA("Decal") then
 			v:Destroy()
 		end
 	end
+
+	-- OTHER UI
+	for _,v in ipairs(game:GetDescendants()) do
+
+		if v:IsA("ScreenGui") then
+
+			if v ~= ScreenGui then
+				v.Enabled = false
+			end
+		end
+	end
 end
 
+--========================
+-- RESTORE
+--========================
 local function Restore()
 
 	optimized = false
 
 	Lighting.GlobalShadows = true
 	Lighting.FogEnd = 100000
-	Lighting.Technology = Enum.Technology.Future
+	Lighting.Brightness = 2
+
+	pcall(function()
+		Lighting.Technology = Enum.Technology.Future
+	end)
 
 	if camera then
 		camera.FieldOfView = 70
 	end
+
+	for _,v in ipairs(workspace:GetDescendants()) do
+
+		if v:IsA("BasePart") then
+			v.LocalTransparencyModifier = 0
+		end
+	end
 end
 
---=========================
+--========================
 -- BUTTONS
---=========================
-Button("Ultra Optimize", UltraOptimize)
+--========================
+Button("no lag", UltraOptimize)
 Button("Restore", Restore)
 
---=========================
+--========================
 -- DRAG
---=========================
+--========================
 local dragging = false
 local dragStart
 local startPos
@@ -253,9 +296,9 @@ UserInputService.InputEnded:Connect(function()
 	dragging = false
 end)
 
---=========================
+--========================
 -- MINIMIZE
---=========================
+--========================
 local minimized = false
 local oldSize = Main.Size
 
@@ -292,9 +335,9 @@ MinBtn.MouseButton1Click:Connect(function()
 	end
 end)
 
---=========================
+--========================
 -- CLOSE
---=========================
+--========================
 CloseBtn.MouseButton1Click:Connect(function()
 	ScreenGui:Destroy()
 end)
