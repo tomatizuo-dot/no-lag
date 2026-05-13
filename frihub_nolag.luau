@@ -1,343 +1,211 @@
-local UserInputService = game:GetService("UserInputService")
 local Lighting = game:GetService("Lighting")
-local Terrain = workspace:FindFirstChildOfClass("Terrain")
+local StarterGui = game:GetService("StarterGui")
+local Players = game:GetService("Players")
 
-local camera = workspace.CurrentCamera
-local guiParent = gethui and gethui() or game:GetService("CoreGui")
-
-pcall(function()
-	guiParent:FindFirstChild("FriHubNoLag"):Destroy()
-end)
+local player = Players.LocalPlayer
 
 --========================
 -- GUI
 --========================
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "FriHubNoLag"
+ScreenGui.Name = "no lag"
 ScreenGui.ResetOnSpawn = false
-ScreenGui.IgnoreGuiInset = true
-ScreenGui.Parent = guiParent
+ScreenGui.Parent = game:GetService("CoreGui")
 
-local Main = Instance.new("Frame")
-Main.Size = UDim2.new(0,260,0,240)
-Main.Position = UDim2.new(0.5,-130,0.5,-120)
-Main.BackgroundColor3 = Color3.fromRGB(25,25,25)
-Main.BorderSizePixel = 0
-Main.Parent = ScreenGui
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0,220,0,100)
+frame.Position = UDim2.new(0.5,-110,0.5,-50)
+frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+frame.BorderSizePixel = 0
+frame.Parent = ScreenGui
 
---========================
--- TOP
---========================
-local Top = Instance.new("Frame")
-Top.Size = UDim2.new(1,0,0,36)
-Top.BackgroundColor3 = Color3.fromRGB(35,35,35)
-Top.BorderSizePixel = 0
-Top.Active = true
-Top.Parent = Main
-
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1,-80,1,0)
-Title.Position = UDim2.new(0,8,0,0)
-Title.BackgroundTransparency = 1
-Title.Text = "FriHub | No Lag"
-Title.TextColor3 = Color3.new(1,1,1)
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 14
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.Parent = Top
-
--- minimize
-local MinBtn = Instance.new("TextButton")
-MinBtn.Size = UDim2.new(0,28,0,28)
-MinBtn.Position = UDim2.new(1,-64,0.5,-14)
-MinBtn.BackgroundColor3 = Color3.fromRGB(50,50,50)
-MinBtn.TextColor3 = Color3.new(1,1,1)
-MinBtn.Text = "–"
-MinBtn.Font = Enum.Font.GothamBold
-MinBtn.TextSize = 18
-MinBtn.BorderSizePixel = 0
-MinBtn.Parent = Top
-
--- close
-local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0,28,0,28)
-CloseBtn.Position = UDim2.new(1,-32,0.5,-14)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(50,50,50)
-CloseBtn.TextColor3 = Color3.new(1,1,1)
-CloseBtn.Text = "×"
-CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.TextSize = 18
-CloseBtn.BorderSizePixel = 0
-CloseBtn.Parent = Top
+local btn = Instance.new("TextButton")
+btn.Size = UDim2.new(1,-20,0,50)
+btn.Position = UDim2.new(0,10,0,10)
+btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+btn.TextColor3 = Color3.new(1,1,1)
+btn.Font = Enum.Font.GothamBold
+btn.TextSize = 14
+btn.Text = "no lag OFF"
+btn.Parent = frame
 
 --========================
--- CONTAINER
+-- STATE
 --========================
-local Container = Instance.new("ScrollingFrame")
-Container.Size = UDim2.new(1,0,1,-36)
-Container.Position = UDim2.new(0,0,0,36)
-Container.BackgroundTransparency = 1
-Container.BorderSizePixel = 0
-Container.ScrollBarThickness = 2
-Container.CanvasSize = UDim2.new(0,0,0,0)
-Container.Parent = Main
-
-local Layout = Instance.new("UIListLayout")
-Layout.Padding = UDim.new(0,5)
-Layout.Parent = Container
-
-Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-	Container.CanvasSize = UDim2.new(0,0,0,Layout.AbsoluteContentSize.Y + 10)
-end)
+local enabled = false
+local animLoopRunning = false
 
 --========================
--- BUTTON
+-- ANTI ANIMATION (30秒保険)
 --========================
-local function Button(text, callback)
+local function startAnimLock(char)
 
-	local b = Instance.new("TextButton")
-	b.Size = UDim2.new(1,-10,0,38)
-	b.Position = UDim2.new(0,5,0,0)
-	b.BackgroundColor3 = Color3.fromRGB(40,40,40)
-	b.BorderSizePixel = 0
-	b.Text = text
-	b.TextColor3 = Color3.new(1,1,1)
-	b.Font = Enum.Font.Gotham
-	b.TextSize = 13
-	b.Parent = Container
+	if animLoopRunning then return end
+	animLoopRunning = true
 
-	b.MouseButton1Click:Connect(callback)
+	local humanoid = char:WaitForChild("Humanoid")
+
+	-- 即停止（初回）
+	local animate = char:FindFirstChild("Animate")
+	if animate then
+		animate.Disabled = true
+	end
+
+	humanoid.AnimationPlayed:Connect(function(track)
+		if enabled then
+			track:Stop()
+		end
+	end)
+
+	task.spawn(function()
+		while char.Parent and enabled do
+			task.wait(30)
+
+			for _,track in ipairs(humanoid:GetPlayingAnimationTracks()) do
+				track:Stop()
+			end
+		end
+	end)
 end
 
 --========================
--- ULTRA
+-- ENABLE
 --========================
-local optimized = false
+local function Enable()
 
-local function UltraOptimize()
-
-	if optimized then
-		return
-	end
-
-	optimized = true
-
-	-- LIGHTING
+	-- Lighting軽量化（光ほぼゼロ）
 	Lighting.GlobalShadows = false
-	Lighting.FogEnd = 1e9
 	Lighting.Brightness = 0
 	Lighting.EnvironmentDiffuseScale = 0
 	Lighting.EnvironmentSpecularScale = 0
+	Lighting.FogEnd = 1e9
+	Lighting.OutdoorAmbient = Color3.new(0,0,0)
 
 	pcall(function()
 		Lighting.Technology = Enum.Technology.Compatibility
 	end)
 
-	-- CAMERA
-	if camera then
-		camera.FieldOfView = 50
-	end
-
-	-- TERRAIN
-	if Terrain then
-		Terrain.WaterWaveSize = 0
-		Terrain.WaterWaveSpeed = 0
-		Terrain.WaterReflectance = 0
-		Terrain.WaterTransparency = 1
-
-		pcall(function()
-			Terrain.Decoration = false
-		end)
-	end
-
-	-- LIGHTING EFFECTS
+	-- ポストエフェクト削除
 	for _,v in ipairs(Lighting:GetChildren()) do
-
-		if v:IsA("PostEffect")
+		if v:IsA("BloomEffect")
+		or v:IsA("SunRaysEffect")
+		or v:IsA("ColorCorrectionEffect")
+		or v:IsA("DepthOfFieldEffect")
 		or v:IsA("Atmosphere")
 		or v:IsA("Sky") then
-
 			v:Destroy()
 		end
 	end
 
-	-- WORKSPACE
-	for _,v in ipairs(workspace:GetDescendants()) do
+	-- 初回軽量化
+	for _,v in ipairs(game:GetDescendants()) do
 
-		-- PARTS
-		if v:IsA("BasePart") then
-
-			v.Material = Enum.Material.Plastic
-			v.CastShadow = false
-			v.Reflectance = 0
-
-			local n = string.lower(v.Name)
-
-			local keep =
-				n:find("base")
-				or n:find("floor")
-				or n:find("ground")
-				or v.Position.Y < 3
-
-			if not keep then
-				v.LocalTransparencyModifier = 1
-			end
+		if v:IsA("ScreenGui") then
+			v.Enabled = false
 		end
 
-		-- MESH
-		if v:IsA("MeshPart") then
-			v.RenderFidelity = Enum.RenderFidelity.Performance
+		if v:IsA("BillboardGui") or v:IsA("SurfaceGui") then
+			v.Enabled = false
 		end
 
-		-- EFFECTS
 		if v:IsA("ParticleEmitter")
 		or v:IsA("Trail")
 		or v:IsA("Beam")
 		or v:IsA("Smoke")
 		or v:IsA("Fire")
-		or v:IsA("Sparkles")
-		or v:IsA("Explosion")
-		or v:IsA("Highlight") then
-
+		or v:IsA("Sparkles") then
 			v.Enabled = false
 		end
 
-		-- TEXTURES
-		if v:IsA("Texture")
-		or v:IsA("Decal") then
-			v:Destroy()
+		if v:IsA("Decal") or v:IsA("Texture") then
+			v.Transparency = 1
+		end
+
+		if v:IsA("BasePart") then
+			v.CastShadow = false
+			v.Material = Enum.Material.SmoothPlastic
+			v.Reflectance = 0
 		end
 	end
 
-	-- OTHER UI
-	for _,v in ipairs(game:GetDescendants()) do
+	-- 追加分監視
+	workspace.DescendantAdded:Connect(function(v)
+
+		if not enabled then return end
 
 		if v:IsA("ScreenGui") then
-
-			if v ~= ScreenGui then
-				v.Enabled = false
-			end
+			v.Enabled = false
 		end
+
+		if v:IsA("BillboardGui") or v:IsA("SurfaceGui") then
+			v.Enabled = false
+		end
+
+		if v:IsA("ParticleEmitter")
+		or v:IsA("Trail")
+		or v:IsA("Beam")
+		or v:IsA("Smoke")
+		or v:IsA("Fire")
+		or v:IsA("Sparkles") then
+			v.Enabled = false
+		end
+
+		if v:IsA("Decal") or v:IsA("Texture") then
+			v.Transparency = 1
+		end
+
+		if v:IsA("BasePart") then
+			v.CastShadow = false
+			v.Material = Enum.Material.SmoothPlastic
+		end
+	end)
+
+	-- キャラアニメ制御開始
+	if player.Character then
+		startAnimLock(player.Character)
 	end
+
+	player.CharacterAdded:Connect(function(char)
+		if enabled then
+			animLoopRunning = false
+			startAnimLock(char)
+		end
+	end)
 end
 
 --========================
--- RESTORE
+-- DISABLE
 --========================
-local function Restore()
-
-	optimized = false
+local function Disable()
 
 	Lighting.GlobalShadows = true
-	Lighting.FogEnd = 100000
 	Lighting.Brightness = 2
+	Lighting.EnvironmentDiffuseScale = 1
+	Lighting.EnvironmentSpecularScale = 1
+	Lighting.FogEnd = 100000
+	Lighting.OutdoorAmbient = Color3.fromRGB(127,127,127)
 
 	pcall(function()
 		Lighting.Technology = Enum.Technology.Future
 	end)
 
-	if camera then
-		camera.FieldOfView = 70
-	end
-
-	for _,v in ipairs(workspace:GetDescendants()) do
-
-		if v:IsA("BasePart") then
-			v.LocalTransparencyModifier = 0
-		end
-	end
+	animLoopRunning = false
 end
 
 --========================
--- BUTTONS
+-- TOGGLE
 --========================
-Button("no lag", UltraOptimize)
-Button("Restore", Restore)
+btn.MouseButton1Click:Connect(function()
 
---========================
--- DRAG
---========================
-local dragging = false
-local dragStart
-local startPos
+	enabled = not enabled
 
-Top.InputBegan:Connect(function(input)
-
-	if input.UserInputType == Enum.UserInputType.MouseButton1
-	or input.UserInputType == Enum.UserInputType.Touch then
-
-		dragging = true
-		dragStart = input.Position
-		startPos = Main.Position
-	end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-
-	if not dragging then
-		return
-	end
-
-	if input.UserInputType == Enum.UserInputType.MouseMovement
-	or input.UserInputType == Enum.UserInputType.Touch then
-
-		local delta = input.Position - dragStart
-
-		Main.Position = UDim2.new(
-			startPos.X.Scale,
-			startPos.X.Offset + delta.X,
-			startPos.Y.Scale,
-			startPos.Y.Offset + delta.Y
-		)
-	end
-end)
-
-UserInputService.InputEnded:Connect(function()
-	dragging = false
-end)
-
---========================
--- MINIMIZE
---========================
-local minimized = false
-local oldSize = Main.Size
-
-MinBtn.MouseButton1Click:Connect(function()
-
-	minimized = not minimized
-
-	if minimized then
-
-		oldSize = Main.Size
-
-		Container.Visible = false
-		Top.Visible = false
-
-		Main.Size = UDim2.new(0,40,0,40)
-		Main.BackgroundColor3 = Color3.fromRGB(40,40,40)
-
-		MinBtn.Parent = Main
-		MinBtn.Size = UDim2.new(1,0,1,0)
-		MinBtn.Position = UDim2.new(0,0,0,0)
-		MinBtn.Text = "+"
-
+	if enabled then
+		btn.Text = "no lag ON"
+		btn.BackgroundColor3 = Color3.fromRGB(0,170,80)
+		Enable()
 	else
-
-		Main.Size = oldSize
-
-		Container.Visible = true
-		Top.Visible = true
-
-		MinBtn.Parent = Top
-		MinBtn.Size = UDim2.new(0,28,0,28)
-		MinBtn.Position = UDim2.new(1,-64,0.5,-14)
-		MinBtn.Text = "–"
+		btn.Text = "no lag OFF"
+		btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+		Disable()
 	end
-end)
-
---========================
--- CLOSE
---========================
-CloseBtn.MouseButton1Click:Connect(function()
-	ScreenGui:Destroy()
 end)
