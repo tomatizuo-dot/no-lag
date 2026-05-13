@@ -1,6 +1,6 @@
 local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
+local Terrain = workspace:FindFirstChildOfClass("Terrain")
 
 local camera = workspace.CurrentCamera
 local guiParent = gethui and gethui() or game:GetService("CoreGui")
@@ -9,9 +9,9 @@ pcall(function()
 	guiParent:FindFirstChild("FriHubNoLag"):Destroy()
 end)
 
--- =========================
+--=========================
 -- GUI
--- =========================
+--=========================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "FriHubNoLag"
 ScreenGui.ResetOnSpawn = false
@@ -19,134 +19,172 @@ ScreenGui.IgnoreGuiInset = true
 ScreenGui.Parent = guiParent
 
 local Main = Instance.new("Frame")
-Main.AnchorPoint = Vector2.new(0.5,0.5)
-Main.Position = UDim2.new(0.5,0,0.5,0)
-Main.Size = UDim2.new(0.45,0,0.6,0)
-Main.BackgroundColor3 = Color3.fromRGB(20,20,20)
+Main.Size = UDim2.new(0,260,0,240)
+Main.Position = UDim2.new(0.5,-130,0.5,-120)
+Main.BackgroundColor3 = Color3.fromRGB(25,25,25)
+Main.BorderSizePixel = 0
 Main.Parent = ScreenGui
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0,10)
 
--- =========================
+--=========================
 -- TOP
--- =========================
+--=========================
 local Top = Instance.new("Frame")
-Top.Size = UDim2.new(1,0,0,40)
-Top.BackgroundColor3 = Color3.fromRGB(30,30,30)
-Top.Parent = Main
+Top.Size = UDim2.new(1,0,0,36)
+Top.BackgroundColor3 = Color3.fromRGB(35,35,35)
+Top.BorderSizePixel = 0
 Top.Active = true
-Instance.new("UICorner", Top).CornerRadius = UDim.new(0,10)
+Top.Parent = Main
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1,-120,1,0)
-Title.Position = UDim2.new(0,10,0,0)
+Title.Size = UDim2.new(1,-80,1,0)
+Title.Position = UDim2.new(0,8,0,0)
 Title.BackgroundTransparency = 1
 Title.Text = "FriHub | No Lag"
 Title.TextColor3 = Color3.new(1,1,1)
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 16
+Title.TextSize = 14
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = Top
 
+-- minimize
 local MinBtn = Instance.new("TextButton")
-MinBtn.Size = UDim2.new(0,30,0,30)
-MinBtn.Position = UDim2.new(1,-70,0.5,-15)
-MinBtn.Text = "–"
+MinBtn.Size = UDim2.new(0,28,0,28)
+MinBtn.Position = UDim2.new(1,-64,0.5,-14)
 MinBtn.BackgroundColor3 = Color3.fromRGB(50,50,50)
 MinBtn.TextColor3 = Color3.new(1,1,1)
+MinBtn.Text = "–"
+MinBtn.Font = Enum.Font.GothamBold
+MinBtn.TextSize = 18
+MinBtn.BorderSizePixel = 0
 MinBtn.Parent = Top
-Instance.new("UICorner", MinBtn).CornerRadius = UDim.new(1,0)
 
+-- close
 local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0,30,0,30)
-CloseBtn.Position = UDim2.new(1,-35,0.5,-15)
-CloseBtn.Text = "×"
+CloseBtn.Size = UDim2.new(0,28,0,28)
+CloseBtn.Position = UDim2.new(1,-32,0.5,-14)
 CloseBtn.BackgroundColor3 = Color3.fromRGB(50,50,50)
 CloseBtn.TextColor3 = Color3.new(1,1,1)
+CloseBtn.Text = "×"
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextSize = 18
+CloseBtn.BorderSizePixel = 0
 CloseBtn.Parent = Top
-Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(1,0)
 
--- =========================
--- SCROLL
--- =========================
+--=========================
+-- CONTAINER
+--=========================
 local Container = Instance.new("ScrollingFrame")
-Container.Size = UDim2.new(1,0,1,-40)
-Container.Position = UDim2.new(0,0,0,40)
+Container.Size = UDim2.new(1,0,1,-36)
+Container.Position = UDim2.new(0,0,0,36)
 Container.BackgroundTransparency = 1
-Container.ScrollBarThickness = 4
-Container.AutomaticCanvasSize = Enum.AutomaticSize.Y
+Container.BorderSizePixel = 0
+Container.ScrollBarThickness = 2
 Container.CanvasSize = UDim2.new(0,0,0,0)
 Container.Parent = Main
 
 local Layout = Instance.new("UIListLayout")
-Layout.Padding = UDim.new(0,6)
+Layout.Padding = UDim.new(0,5)
 Layout.Parent = Container
 
 Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 	Container.CanvasSize = UDim2.new(0,0,0,Layout.AbsoluteContentSize.Y + 10)
 end)
 
--- =========================
+--=========================
 -- BUTTON
--- =========================
+--=========================
 local function Button(text, callback)
+
 	local b = Instance.new("TextButton")
-	b.Size = UDim2.new(1,-10,0,45)
+	b.Size = UDim2.new(1,-10,0,38)
+	b.Position = UDim2.new(0,5,0,0)
 	b.BackgroundColor3 = Color3.fromRGB(40,40,40)
+	b.BorderSizePixel = 0
 	b.Text = text
 	b.TextColor3 = Color3.new(1,1,1)
+	b.Font = Enum.Font.Gotham
+	b.TextSize = 13
 	b.Parent = Container
-	Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
+
 	b.MouseButton1Click:Connect(callback)
 end
 
--- =========================
--- LIGHT OPTIMIZER
--- =========================
-local function clear(v)
-	if v:IsA("ParticleEmitter")
-	or v:IsA("Trail")
-	or v:IsA("Beam")
-	or v:IsA("Smoke")
-	or v:IsA("Fire")
-	or v:IsA("Sparkles")
-	or v:IsA("Highlight") then
-		v:Destroy()
+--=========================
+-- OPTIMIZER
+--=========================
+local optimized = false
+
+local function UltraOptimize()
+
+	if optimized then
+		return
 	end
-end
 
-local function Ultra()
+	optimized = true
 
+	-- Lighting
 	Lighting.GlobalShadows = false
 	Lighting.FogEnd = 1e9
 	Lighting.Brightness = 1
 	Lighting.EnvironmentDiffuseScale = 0
 	Lighting.EnvironmentSpecularScale = 0
+	Lighting.Technology = Enum.Technology.Compatibility
 
+	-- Camera
 	if camera then
-		camera.FieldOfView = 60
+		camera.FieldOfView = 50
 	end
 
-	-- 1回だけ処理
+	-- Water
+	if Terrain then
+		Terrain.WaterWaveSize = 0
+		Terrain.WaterWaveSpeed = 0
+		Terrain.WaterReflectance = 0
+		Terrain.WaterTransparency = 1
+	end
+
+	-- Effects
+	for _,v in ipairs(Lighting:GetChildren()) do
+
+		if v:IsA("BlurEffect")
+		or v:IsA("BloomEffect")
+		or v:IsA("SunRaysEffect")
+		or v:IsA("ColorCorrectionEffect")
+		or v:IsA("DepthOfFieldEffect") then
+
+			v.Enabled = false
+		end
+	end
+
+	-- Workspace optimize
 	for _,v in ipairs(workspace:GetDescendants()) do
 
-		-- エフェクト停止
+		if v:IsA("BasePart") then
+
+			v.CastShadow = false
+			v.Material = Enum.Material.Plastic
+			v.Reflectance = 0
+
+			if v.Material == Enum.Material.Neon then
+				v.Material = Enum.Material.Plastic
+			end
+		end
+
+		if v:IsA("MeshPart") then
+			v.RenderFidelity = Enum.RenderFidelity.Performance
+		end
+
 		if v:IsA("ParticleEmitter")
 		or v:IsA("Trail")
 		or v:IsA("Beam")
 		or v:IsA("Smoke")
 		or v:IsA("Fire")
-		or v:IsA("Sparkles") then
+		or v:IsA("Sparkles")
+		or v:IsA("Highlight") then
 
 			v.Enabled = false
 		end
 
-		-- パーツ軽量化
-		if v:IsA("BasePart") then
-			v.CastShadow = false
-			v.Material = Enum.Material.Plastic
-		end
-
-		-- テクスチャ削除
 		if v:IsA("Texture")
 		or v:IsA("Decal") then
 			v:Destroy()
@@ -154,36 +192,34 @@ local function Ultra()
 	end
 end
 
-local function Balanced()
-	Lighting.GlobalShadows = false
-	if camera then camera.FieldOfView = 60 end
-end
-
-local function Low()
-	Lighting.GlobalShadows = false
-end
-
 local function Restore()
+
+	optimized = false
+
 	Lighting.GlobalShadows = true
-	if camera then camera.FieldOfView = 70 end
+	Lighting.FogEnd = 100000
+	Lighting.Technology = Enum.Technology.Future
+
+	if camera then
+		camera.FieldOfView = 70
+	end
 end
 
--- =========================
+--=========================
 -- BUTTONS
--- =========================
-Button("Ultra Mode", Ultra)
-Button("Balanced Mode", Balanced)
-Button("Low Mode", Low)
-Button("Restore Mode", Restore)
+--=========================
+Button("Ultra Optimize", UltraOptimize)
+Button("Restore", Restore)
 
--- =========================
+--=========================
 -- DRAG
--- =========================
+--=========================
 local dragging = false
 local dragStart
 local startPos
 
 Top.InputBegan:Connect(function(input)
+
 	if input.UserInputType == Enum.UserInputType.MouseButton1
 	or input.UserInputType == Enum.UserInputType.Touch then
 
@@ -194,67 +230,71 @@ Top.InputBegan:Connect(function(input)
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-	if not dragging then return end
 
-	local delta = input.Position - dragStart
+	if not dragging then
+		return
+	end
 
-	Main.Position = UDim2.new(
-		startPos.X.Scale,
-		startPos.X.Offset + delta.X,
-		startPos.Y.Scale,
-		startPos.Y.Offset + delta.Y
-	)
+	if input.UserInputType == Enum.UserInputType.MouseMovement
+	or input.UserInputType == Enum.UserInputType.Touch then
+
+		local delta = input.Position - dragStart
+
+		Main.Position = UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset + delta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset + delta.Y
+		)
+	end
 end)
 
 UserInputService.InputEnded:Connect(function()
 	dragging = false
 end)
 
--- =========================
--- ⭐ 完全丸最小化（修正版）
--- =========================
+--=========================
+-- MINIMIZE
+--=========================
 local minimized = false
+local oldSize = Main.Size
 
-local function setMin(state)
+MinBtn.MouseButton1Click:Connect(function()
 
-	minimized = state
+	minimized = not minimized
 
-	if state then
-		-- 完全丸モード
+	if minimized then
+
+		oldSize = Main.Size
+
 		Container.Visible = false
 		Top.Visible = false
 
-		Main.Size = UDim2.new(0,44,0,44)
-		Main.BackgroundTransparency = 1
+		Main.Size = UDim2.new(0,40,0,40)
+		Main.BackgroundColor3 = Color3.fromRGB(40,40,40)
 
 		MinBtn.Parent = Main
 		MinBtn.Size = UDim2.new(1,0,1,0)
 		MinBtn.Position = UDim2.new(0,0,0,0)
 		MinBtn.Text = "+"
 
-		CloseBtn.Visible = false
-
 	else
-		-- 復帰
-		Top.Visible = true
-		Container.Visible = true
 
-		Main.Size = UDim2.new(0.45,0,0.6,0)
-		Main.BackgroundTransparency = 0
+		Main.Size = oldSize
+
+		Container.Visible = true
+		Top.Visible = true
 
 		MinBtn.Parent = Top
-		MinBtn.Size = UDim2.new(0,30,0,30)
-		MinBtn.Position = UDim2.new(1,-70,0.5,-15)
+		MinBtn.Size = UDim2.new(0,28,0,28)
+		MinBtn.Position = UDim2.new(1,-64,0.5,-14)
 		MinBtn.Text = "–"
-
-		CloseBtn.Visible = true
 	end
-end
-
-MinBtn.MouseButton1Click:Connect(function()
-	setMin(not minimized)
 end)
 
+--=========================
+-- CLOSE
+--=========================
 CloseBtn.MouseButton1Click:Connect(function()
 	ScreenGui:Destroy()
 end)
